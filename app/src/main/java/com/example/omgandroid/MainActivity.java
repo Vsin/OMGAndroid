@@ -118,11 +118,7 @@ public class MainActivity extends Activity implements View.OnClickListener,
 
     @Override
     public void onClick(View view) {
-        mainTextView.setText(mainEditText.getText().toString() +
-                                " is learning Android Development!");
-        mNameList.add(mainEditText.getText().toString());
-        mArrayAdapter.notifyDataSetChanged();
-        setShareIntent();
+        queryBooks(mainEditText.getText().toString());
     }
 
     @Override
@@ -182,12 +178,16 @@ public class MainActivity extends Activity implements View.OnClickListener,
                     new JsonHttpResponseHandler() {
                         @Override
                         public void onSuccess(JSONObject jsonObject) {
-                            Toast.makeText(getApplicationContext(), "Success!", Toast.LENGTH_LONG).show();
+                            Toast.makeText(getApplicationContext(), "Success!", Toast.LENGTH_LONG).
+                                                                                            show();
                             Log.d("omg android", jsonObject.toString());
                         }
 
                         public void onFailure(int statusCode, Throwable throwable) {
-                            Toast.makeText(getApplicationContext(), "Error: ")
+                            Toast.makeText(getApplicationContext(), "Error: " + statusCode + " " +
+                                                        throwable.getMessage(), Toast.LENGTH_LONG);
+
+                            Log.d("omg android", statusCode + " " + throwable.getMessage());
                         }
         });
     }
