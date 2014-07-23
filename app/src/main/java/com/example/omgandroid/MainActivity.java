@@ -10,6 +10,7 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.Window;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
@@ -36,7 +37,7 @@ public class MainActivity extends Activity implements View.OnClickListener,
     Button mainButton;
     EditText mainEditText;
     ListView mainListView;
-    ArrayAdapter mArrayAdapter;
+    JSONAdapter mJSONAdapter;
     ArrayList mNameList = new ArrayList();
     ShareActionProvider mShareActionProvider;
     private static final String PREFS = "prefs";
@@ -47,7 +48,8 @@ public class MainActivity extends Activity implements View.OnClickListener,
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-
+        requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
+        setProgressBarIndeterminateVisibility(false);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         // 1. Access the TextView defined in layout XML
@@ -58,11 +60,9 @@ public class MainActivity extends Activity implements View.OnClickListener,
         mainButton.setOnClickListener(this);
         mainEditText = (EditText) findViewById(R.id.main_edittext);
         mainListView = (ListView) findViewById(R.id.main_listview);
-        mArrayAdapter = new ArrayAdapter(this,
-                        android.R.layout.simple_list_item_1,
-                        mNameList);
-        mainListView.setAdapter(mArrayAdapter);
         mainListView.setOnItemClickListener(this);
+        mJSONAdapter = new JSONAdapter(this, getLayoutInflater());
+        mainListView.setAdapter(mJSONAdapter);
     }
 
     private void displayWelcome() {
@@ -123,7 +123,13 @@ public class MainActivity extends Activity implements View.OnClickListener,
 
     @Override
     public void onItemClick(AdapterView parent, View view, int position, long id) {
-        Log.d("OMG Android", position + ": " + mNameList.get(position));
+        JSONObject jsonObject = (JSONObject) mJSONAdapter.getItem(position);
+        String coverID = jsonObject.optString("cover_id","");
+
+        Intent detailIntent = new Intent(this, DetailActivity.class);
+
+        detailIntent.putExtra("coverID", coverID);
+        startActivity(detailIntent);
     }
 
     @Override
@@ -174,13 +180,15 @@ public class MainActivity extends Activity implements View.OnClickListener,
         }
 
         AsyncHttpClient client = new AsyncHttpClient();
+        setProgressBarIndeterminateVisibility(true);
         client.get(QUERY_URL + urlString,
                     new JsonHttpResponseHandler() {
                         @Override
                         public void onSuccess(JSONObject jsonObject) {
                             Toast.makeText(getApplicationContext(), "Success!", Toast.LENGTH_LONG).
                                                                                             show();
-                            Log.d("omg android", jsonObject.toString());
+                            mJSONAdapter.updateData(jsonObject.optJSONArray("docs"));
+                            setProgressBarIndeterminateVisibility(false);
                         }
 
                         public void onFailure(int statusCode, Throwable throwable) {
@@ -188,6 +196,7 @@ public class MainActivity extends Activity implements View.OnClickListener,
                                                         throwable.getMessage(), Toast.LENGTH_LONG);
 
                             Log.d("omg android", statusCode + " " + throwable.getMessage());
+                            setProgressBarIndeterminateVisibility(false);
                         }
         });
     }
